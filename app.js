@@ -5,6 +5,19 @@ const cors = require("cors");
 const contactsRouter = require("./routes/api/contacts");
 
 const app = express();
+const mongoose = require("mongoose");
+require("dotenv").config();
+
+mongoose.set("strictQuery", true);
+mongoose
+  .connect(
+    `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.kn25prd.mongodb.net/db-contacts`
+  )
+  .then(() => console.log("Database connection successful"))
+  .catch(() => {
+    console.log("Database connection failed");
+    process.exit(1);
+  });
 
 const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 
@@ -20,9 +33,8 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   if (err?.error?.isJoi) {
-    // we had a joi error, let's return a custom 400 json response
     return res.status(400).json({
-      type: err.type, // will be "query" here, but could be "headers", "body", or "params"
+      type: err.type,
       message: err.error.toString(),
     });
   }

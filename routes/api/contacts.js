@@ -4,6 +4,7 @@ const {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact,
 } = require("../../models/contacts");
 
 const express = require("express");
@@ -14,11 +15,31 @@ const validator = require("express-joi-validation").createValidator({
   passError: true,
 });
 
-const schema = Joi.object(
+const schemaAddContact = Joi.object(
   {
     name: Joi.string().required(),
     email: Joi.string().required(),
     phone: Joi.string().required(),
+    favorite: Joi.boolean(),
+  },
+  { abortEarly: false }
+);
+
+const schemaUpdateContact = Joi.object(
+  {
+    name: Joi.string(),
+    email: Joi.string(),
+    phone: Joi.string(),
+  },
+  { abortEarly: false }
+);
+
+const schemaUpdateFavoritContact = Joi.object(
+  {
+    name: Joi.string(),
+    email: Joi.string(),
+    phone: Joi.string(),
+    favorite: Joi.boolean().required(),
   },
   { abortEarly: false }
 );
@@ -37,7 +58,7 @@ router.get("/:contactId", async (req, res, next) => {
   }
 });
 
-router.post("/", validator.body(schema), async (req, res, next) => {
+router.post("/", validator.body(schemaAddContact), async (req, res, next) => {
   const { name, email, phone } = req.body;
   if (!name || !email || !phone) {
     res.status(400).json({ message: "missing required name field" });
@@ -56,16 +77,23 @@ router.delete("/:contactId", async (req, res, next) => {
   }
 });
 
-router.put("/:contactId", validator.body(schema), async (req, res, next) => {
-  const { name, email, phone } = req.body;
-
-  if (!name || !email || !phone) {
-    res.status(400).json({ message: "missing fields" });
-  } else {
+router.put(
+  "/:contactId",
+  validator.body(schemaUpdateContact),
+  async (req, res, next) => {
     const contact = await updateContact(req.params.contactId, req.body);
-    if (contact === -1) res.status(404).json({ message: "Not found" });
-    res.status(200).json(contact);
+    if (contact === 404) return res.status(404).json({ message: "Not found" });
+    return res.status(200).json(contact);
   }
-});
+);
 
+router.put(
+  "/:contactId/favorite",
+  validator.body(schemaUpdateFavoritContact),
+  async (req, res, next) => {
+    const contact = await updateStatusContact(req.params.contactId, req.body);
+    if (contact === 404) return res.status(404).json({ message: "Not found" });
+    return res.status(200).json(contact);
+  }
+);
 module.exports = router;
