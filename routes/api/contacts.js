@@ -6,10 +6,11 @@ const {
   updateContact,
   updateStatusContact,
 } = require("../../models/contacts");
+const { isAuthorized } = require("../../utils/isauthorized.util");
 
 const express = require("express");
 
-const router = express.Router();
+const routerContacts = express.Router();
 const Joi = require("joi");
 const validator = require("express-joi-validation").createValidator({
   passError: true,
@@ -44,56 +45,30 @@ const schemaUpdateFavoritContact = Joi.object(
   { abortEarly: false }
 );
 
-router.get("/", async (req, res, next) => {
-  const allContacts = await listContacts();
-  res.status(200).json(allContacts);
-});
+routerContacts.get("/", isAuthorized, listContacts);
 
-router.get("/:contactId", async (req, res, next) => {
-  const contactbyId = await getContactById(req.params.contactId);
-  if (contactbyId) {
-    res.status(200).json(contactbyId);
-  } else {
-    res.status(404).json({ message: "Not found" });
-  }
-});
+routerContacts.get("/:contactId", isAuthorized, getContactById);
 
-router.post("/", validator.body(schemaAddContact), async (req, res, next) => {
-  const { name, email, phone } = req.body;
-  if (!name || !email || !phone) {
-    res.status(400).json({ message: "missing required name field" });
-  } else {
-    const contact = await addContact(req.body);
-    res.status(201).json(contact);
-  }
-});
+routerContacts.post(
+  "/",
+  isAuthorized,
+  validator.body(schemaAddContact),
+  addContact
+);
 
-router.delete("/:contactId", async (req, res, next) => {
-  const statusCode = await removeContact(req.params.contactId);
-  if (statusCode === 200) {
-    res.status(200).json({ message: "contact deleted" });
-  } else {
-    res.status(404).json({ message: "Not found" });
-  }
-});
+routerContacts.delete("/:contactId", isAuthorized, removeContact);
 
-router.put(
+routerContacts.put(
   "/:contactId",
+  isAuthorized,
   validator.body(schemaUpdateContact),
-  async (req, res, next) => {
-    const contact = await updateContact(req.params.contactId, req.body);
-    if (contact === 404) return res.status(404).json({ message: "Not found" });
-    return res.status(200).json(contact);
-  }
+  updateContact
 );
 
-router.put(
+routerContacts.put(
   "/:contactId/favorite",
+  isAuthorized,
   validator.body(schemaUpdateFavoritContact),
-  async (req, res, next) => {
-    const contact = await updateStatusContact(req.params.contactId, req.body);
-    if (contact === 404) return res.status(404).json({ message: "Not found" });
-    return res.status(200).json(contact);
-  }
+  updateStatusContact
 );
-module.exports = router;
+module.exports = routerContacts;
