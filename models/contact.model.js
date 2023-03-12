@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { SchemaTypes } = mongoose;
 const Schema = mongoose.Schema;
 
 const Contact = new Schema({
@@ -15,6 +16,10 @@ const Contact = new Schema({
   favorite: {
     type: Boolean,
     default: false,
+  },
+  owner: {
+    type: SchemaTypes.ObjectId,
+    ref: "users",
   },
 });
 
