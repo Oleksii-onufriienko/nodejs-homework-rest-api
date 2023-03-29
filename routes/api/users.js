@@ -14,6 +14,8 @@ const {
   logout,
   current,
   avatarsPatch,
+  verifyUserToken,
+  resendEmail,
 } = require("../../models/users");
 
 const { isAuthorized } = require("../../utils/isauthorized.util");
@@ -40,5 +42,9 @@ routerUsers.patch(
   upload.single("avatar"),
   avatarsPatch
 );
+
+routerUsers.get("/verify/:verificationToken", isAuthorized, verifyUserToken);
+
+routerUsers.post("/verify/", isAuthorized, resendEmail);
 
 module.exports = routerUsers;
